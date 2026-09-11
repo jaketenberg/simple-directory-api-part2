@@ -6,12 +6,13 @@ The API rate limits incoming requests. A request counter is cached in Redis so t
 docker run --name directory-redis -p 6379:6379 redis
 ```
 
-The web service accepts HTTP requests at http://localhost:8080. Request and response bodies are JSON.
+The web service accepts HTTP requests at http://localhost:8080. Request and response bodies are JSON. Every request must include an `X-Client-Type` header identifying the caller (e.g. `admin`).
 
 An example create request:
 ```shell
 curl --location -v --request POST 'http://localhost:8080/environments/11111111-1111-1111-1111-111111111111/users' \
 --header 'Content-Type: application/json' \
+--header 'X-Client-Type: admin' \
 --data-raw '{
     "username": "jdoe",
     "email": "jdoe@example.com",
@@ -24,11 +25,17 @@ curl --location -v --request POST 'http://localhost:8080/environments/11111111-1
 }'
 ```
 
-This returns HTTP 201 with the created user in the response body, including its generated `id`. Use that id to read and delete the user:
+This returns HTTP 201 with the created user in the response body, including its generated `id`. Use that id to read, update, and delete the user:
 
 ```shell
-curl -v 'http://localhost:8080/environments/11111111-1111-1111-1111-111111111111/users/22222222-2222-2222-2222-222222222222'
-curl -v -X DELETE 'http://localhost:8080/environments/11111111-1111-1111-1111-111111111111/users/22222222-2222-2222-2222-222222222222'
+curl -v 'http://localhost:8080/environments/11111111-1111-1111-1111-111111111111/users/22222222-2222-2222-2222-222222222222' \
+--header 'X-Client-Type: admin'
+curl -v -X PATCH 'http://localhost:8080/environments/11111111-1111-1111-1111-111111111111/users/22222222-2222-2222-2222-222222222222' \
+--header 'Content-Type: application/json' \
+--header 'X-Client-Type: admin' \
+--data-raw '{"locality": "Glasgow"}'
+curl -v -X DELETE 'http://localhost:8080/environments/11111111-1111-1111-1111-111111111111/users/22222222-2222-2222-2222-222222222222' \
+--header 'X-Client-Type: admin'
 ```
 
 ## Building and running
